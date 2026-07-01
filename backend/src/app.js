@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
 
+import pool from './db/pool.js';
 import paymentsRouter from './routes/payments.js';
 import authRouter from './routes/auth.js';
 import walletRouter from './routes/wallet.js';
@@ -18,6 +19,20 @@ app.use(express.urlencoded({ extended: true }));
 
 // Health check (Render pings this).
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
+
+// Database diagnostics — reports connection + table status (no data exposed).
+app.get('/health/db', async (_req, res) => {
+  const hasDatabaseUrl = !!process.env.DATABASE_URL;
+  try {
+    await pool.query('SELECT 1');
+    const t = await pool.query(
+      "SELECT to_regclass('public.users') AS users, to_regclass('public.email_otps') AS otps, to_regclass('public.transactions') AS transactions"
+    );
+    res.json({ hasDatabaseUrl, connected: true, tables: t.rows[0] });
+  } catch (err) {
+    res.json({ hasDatabaseUrl, connected: false, error: err.message });
+  }
+});
 
 app.use('/api/auth', authRouter);
 app.use('/api/wallet', walletRouter);
