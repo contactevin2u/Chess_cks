@@ -18,17 +18,22 @@ END $$;
 -- ── USERS / WALLET ──────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS users (
     user_id       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    email         TEXT UNIQUE NOT NULL,
+    -- Email is NULL for guest accounts (which have no login).
+    email         TEXT UNIQUE,
     display_name  TEXT,
-    -- bcrypt hash of the password (NULL for accounts created without a password)
+    -- bcrypt hash of the password (NULL for guests / passwordless accounts)
     password_hash TEXT,
+    -- Guests can hold/buy tokens; their balance merges into a real account on sign-in.
+    is_guest      BOOLEAN NOT NULL DEFAULT false,
     -- The wallet. Tokens are NON-withdrawable, in-ecosystem only.
     token_balance INTEGER NOT NULL DEFAULT 0 CHECK (token_balance >= 0),
     created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
--- For existing databases created before auth was added:
+-- For databases created before these columns existed:
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_guest BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE users ALTER COLUMN email DROP NOT NULL;
 
 -- ── PASSWORD RESETS (forgot-password flow) ──────────────────────
 CREATE TABLE IF NOT EXISTS password_resets (

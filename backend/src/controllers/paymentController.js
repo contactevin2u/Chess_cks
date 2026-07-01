@@ -30,10 +30,11 @@ export function getPackages(_req, res) {
  */
 export async function createBillHandler(req, res) {
   try {
-    const { userId, packageId } = req.body ?? {};
+    const { packageId } = req.body ?? {};
+    const userId = req.userId; // set by requireAuth (guest or real account)
 
-    if (!userId || !packageId) {
-      return res.status(400).json({ error: 'userId and packageId are required' });
+    if (!packageId) {
+      return res.status(400).json({ error: 'packageId is required' });
     }
 
     const pkg = getPackage(packageId);
@@ -50,6 +51,8 @@ export async function createBillHandler(req, res) {
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
+    // Billplz requires an email; guests don't have one, so use a placeholder.
+    const buyerEmail = user.email || `guest-${user.user_id}@chess.local`;
 
     // 1) Create the Pending ledger row FIRST so we always have a record.
     const txRes = await query(
@@ -64,10 +67,10 @@ export async function createBillHandler(req, res) {
     const bill = await createBill({
       amountCents: pkg.priceCents,
       name: user.display_name || 'Chess Player',
-      email: user.email,
+      email: buyerEmail,
       description: `${pkg.name} — ${pkg.tokens} tokens`,
       callbackUrl: `${BACKEND_PUBLIC_URL}/api/payments/webhook`,
-      redirectUrl: `${FRONTEND_URL}/payment-success`,
+      redirectUrl: `${FRONTEND_URL}`,
       reference: transactionId,
     });
 

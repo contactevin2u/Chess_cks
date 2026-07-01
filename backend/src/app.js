@@ -8,13 +8,9 @@ import walletRouter from './routes/wallet.js';
 
 const app = express();
 
-// CORS: allow the Vercel frontend to call this API.
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL || '*',
-    methods: ['GET', 'POST'],
-  })
-);
+// CORS: auth uses bearer tokens (no cookies), so any origin is safe to allow —
+// this lets both the Vercel site and locally-opened game files call the API.
+app.use(cors({ origin: '*', methods: ['GET', 'POST'] }));
 
 // Billplz posts webhooks as x-www-form-urlencoded; the store UI sends JSON.
 app.use(express.json());

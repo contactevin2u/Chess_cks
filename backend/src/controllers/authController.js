@@ -4,15 +4,55 @@
 import crypto from 'node:crypto';
 import { query } from '../db/pool.js';
 import { hashPassword, verifyPassword } from '../auth/password.js';
-import { signToken } from '../auth/jwt.js';
+import { signToken, verifyToken } from '../auth/jwt.js';
 import { sendMail } from '../services/mailer.js';
+import { withTransaction } from '../db/pool.js';
 
 const publicUser = (u) => ({
   userId: u.user_id,
   email: u.email,
   displayName: u.display_name,
+  isGuest: u.is_guest,
   tokenBalance: u.token_balance,
 });
+
+// Create an anonymous guest account so tokens can be held before sign-up.
+export async function createGuest(_req, res) {
+  try {
+    const { rows } = await query('INSERT INTO users (is_guest) VALUES (true) RETURNING *');
+    const user = rows[0];
+    return res.json({ token: signToken(user.user_id), user: publicUser(user) });
+  } catch (err) {
+    console.error('[createGuest]', err);
+    return res.status(500).json({ error: 'Failed to start guest session' });
+  }
+}
+
+// Move a guest's token balance + purchase history into a real account,
+// then zero the guest out. Returns how many tokens were carried forward.
+async function mergeGuest(guestToken, targetUserId) {
+  const payload = guestToken && verifyToken(guestToken);
+  if (!payload || payload.userId === targetUserId) return 0;
+  try {
+    return await withTransaction(async (client) => {
+      const g = await client.query(
+        'SELECT token_balance, is_guest FROM users WHERE user_id = $1 FOR UPDATE',
+        [payload.userId]
+      );
+      if (!g.rows[0] || !g.rows[0].is_guest) return 0;
+      const amount = g.rows[0].token_balance;
+      if (amount > 0) {
+        await client.query('UPDATE users SET token_balance = token_balance + $1 WHERE user_id = $2', [amount, targetUserId]);
+        await client.query('UPDATE users SET token_balance = 0 WHERE user_id = $1', [payload.userId]);
+        await client.query('UPDATE transactions SET user_id = $1 WHERE user_id = $2', [targetUserId, payload.userId]);
+      }
+      return amount;
+    });
+  } catch (err) {
+    console.error('[mergeGuest]', err);
+    return 0;
+  }
+}
 
 const validEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 const genOtp = () => String(Math.floor(100000 + Math.random() * 900000)); // 6 digits
@@ -77,7 +117,10 @@ export async function verifyOtp(req, res) {
     );
     await query('DELETE FROM email_otps WHERE email = $1', [email]);
     const user = ins.rows[0];
-    return res.status(201).json({ token: signToken(user.user_id), user: publicUser(user) });
+    // Carry any guest tokens forward into the brand-new account.
+    const mergedTokens = await mergeGuest(req.body?.guestToken, user.user_id);
+    const fresh = await query('SELECT * FROM users WHERE user_id = $1', [user.user_id]);
+    return res.status(201).json({ token: signToken(user.user_id), user: publicUser(fresh.rows[0]), mergedTokens });
   } catch (err) {
     console.error('[verifyOtp]', err);
     return res.status(500).json({ error: 'Verification failed' });
@@ -120,7 +163,10 @@ export async function login(req, res) {
     if (!user || !user.password_hash || !(await verifyPassword(password, user.password_hash)))
       return res.status(401).json({ error: 'Invalid email or password' });
 
-    return res.json({ token: signToken(user.user_id), user: publicUser(user) });
+    // Carry any guest tokens forward into this account.
+    const mergedTokens = await mergeGuest(req.body?.guestToken, user.user_id);
+    const fresh = await query('SELECT * FROM users WHERE user_id = $1', [user.user_id]);
+    return res.json({ token: signToken(user.user_id), user: publicUser(fresh.rows[0]), mergedTokens });
   } catch (err) {
     console.error('[login]', err);
     return res.status(500).json({ error: 'Login failed' });

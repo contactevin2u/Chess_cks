@@ -273,6 +273,16 @@
   <!-- ══ AUTH OVERLAY ══ -->
   <div class="overlay" id="auth-overlay" hidden><div class="card" id="auth-card"></div></div>
 
+  <!-- ══ TOKEN STORE OVERLAY (Billplz) ══ -->
+  <div class="overlay" id="store-overlay" hidden>
+    <div class="card">
+      <h2>🪙 Buy Tokens</h2>
+      <p class="muted">Pay securely with Billplz (MYR). Tokens are added to your account — you don't need to sign in to buy, and they carry over when you do.</p>
+      <div id="storeBody"><p class="muted">Loading packages…</p></div>
+      <button class="ghost" data-action="close-store">Cancel</button>
+    </div>
+  </div>
+
   <!-- ══ PROMOTION OVERLAY ══ -->
   <div class="overlay" id="promo-overlay" hidden>
     <div class="card" style="max-width:340px;">
@@ -338,10 +348,10 @@ let currentUser = null;                                   // null = anonymous
 const signedIn = () => !!currentUser;
 const getBalance = () => signedIn() ? (currentUser.tokenBalance||0) : cos.tokens;
 
+const DEFAULT_BACKEND = 'chess-cks.onrender.com';   // your live Render server
 function apiBase(){
   if(settings.serverUrl) return settings.serverUrl.replace(/^wss/,'https').replace(/^ws/,'http');
-  if(location.protocol==='http:'||location.protocol==='https:') return location.origin;
-  return 'http://localhost:8080';   // opened from a file:// — assume local backend
+  return 'https://'+DEFAULT_BACKEND;
 }
 async function api(path,{method='GET',body}={}){
   const headers={'Content-Type':'application/json'};
@@ -351,21 +361,27 @@ async function api(path,{method='GET',body}={}){
   if(!res.ok) throw new Error(data.error || ('Request failed ('+res.status+')'));
   return data;
 }
-async function refreshAccount(){
+const isRealUser = () => !!currentUser && !currentUser.isGuest;
+// Ensure there's always a session: reuse a saved token, else start a guest.
+async function ensureSession(){
   if(authToken){
-    try{ const {user}=await api('/api/auth/me'); currentUser=user; }
-    catch{ authToken=null; currentUser=null; localStorage.removeItem('chess-auth-token'); }
-  } else currentUser=null;
+    try{ const {user}=await api('/api/auth/me'); currentUser=user; updateAccountUI(); updateBalances(); return; }
+    catch{ authToken=null; localStorage.removeItem('chess-auth-token'); }
+  }
+  try{ const {token,user}=await api('/api/auth/guest',{method:'POST'});
+    authToken=token; localStorage.setItem('chess-auth-token',token); currentUser=user;
+  }catch{ currentUser=null; }        // backend unreachable → offline local mode
   updateAccountUI(); updateBalances();
 }
+async function refreshBalance(){ if(!authToken)return; try{ const {user}=await api('/api/auth/me'); currentUser=user; updateBalances(); if(!$('shop-screen').hidden)renderShop(); }catch{} }
 function updateAccountUI(){
   const a=$('accountArea'); if(!a)return;
-  if(signedIn()){
+  if(isRealUser()){
     a.innerHTML=`<span class="acct-name">👤 ${currentUser.displayName||currentUser.email}</span>
       <button class="link-btn" data-action="sign-out">Sign out</button>`;
   } else {
     a.innerHTML=`<button class="small-btn secondary" data-action="account">👤 Sign In / Sign Up</button>
-      <span class="acct-name">or play as guest</span>`;
+      <span class="acct-name">${currentUser?'playing as guest':'offline'}</span>`;
   }
 }
 
@@ -886,10 +902,15 @@ function renderAuth(mode,data){
 }
 function setAuthErr(m){ const e=$('authErr'); if(e)e.textContent=m; }
 function setAuthMsg(m){ const e=$('authMsg'); if(e)e.textContent=m; }
+const guestTokenForMerge = () => (currentUser && currentUser.isGuest) ? authToken : undefined;
+function afterAuth(token,user,mergedTokens,msg){
+  authToken=token; localStorage.setItem('chess-auth-token',token); currentUser=user;
+  showOverlay('auth-overlay',false); updateAccountUI(); updateBalances(); if(!$('shop-screen').hidden)renderShop();
+  toast(mergedTokens>0 ? `${msg} · ${mergedTokens} tokens carried over 🪙` : msg);
+}
 async function doSignin(){ setAuthErr('');
-  try{ const {token,user}=await api('/api/auth/login',{method:'POST',body:{email:$('authEmail').value,password:$('authPass').value}});
-    authToken=token; localStorage.setItem('chess-auth-token',token); currentUser=user;
-    showOverlay('auth-overlay',false); updateAccountUI(); updateBalances(); if(!$('shop-screen').hidden)renderShop(); toast('Signed in!');
+  try{ const r=await api('/api/auth/login',{method:'POST',body:{email:$('authEmail').value,password:$('authPass').value,guestToken:guestTokenForMerge()}});
+    afterAuth(r.token,r.user,r.mergedTokens,'Signed in!');
   }catch(e){ setAuthErr(e.message); } }
 let pendingSignup=null;   // holds {email,password,displayName} between OTP request & verify
 async function doRequestOtp(){ setAuthErr('');
@@ -903,9 +924,8 @@ async function doRequestOtp(){ setAuthErr('');
   }catch(e){ setAuthErr(e.message); } }
 async function doVerifyOtp(){ setAuthErr('');
   if(!pendingSignup){ openAuth('signup'); return; }
-  try{ const {token,user}=await api('/api/auth/verify-otp',{method:'POST',body:{...pendingSignup, code:$('authOtp').value}});
-    authToken=token; localStorage.setItem('chess-auth-token',token); currentUser=user; pendingSignup=null;
-    showOverlay('auth-overlay',false); updateAccountUI(); updateBalances(); toast('Email verified — account created!');
+  try{ const r=await api('/api/auth/verify-otp',{method:'POST',body:{...pendingSignup, code:$('authOtp').value, guestToken:guestTokenForMerge()}});
+    pendingSignup=null; afterAuth(r.token,r.user,r.mergedTokens,'Email verified — account created!');
   }catch(e){ setAuthErr(e.message); } }
 async function resendOtp(){ if(!pendingSignup)return; setAuthErr(''); setAuthMsg('');
   try{ const r=await api('/api/auth/request-otp',{method:'POST',body:{email:pendingSignup.email}});
@@ -920,13 +940,40 @@ async function doReset(){ setAuthErr('');
   try{ await api('/api/auth/reset-password',{method:'POST',body:{token:$('authToken2').value,password:$('authNewPass').value}});
     toast('Password updated — please sign in'); openAuth('signin');
   }catch(e){ setAuthErr(e.message); } }
-function signOut(){ authToken=null; currentUser=null; localStorage.removeItem('chess-auth-token');
-  updateAccountUI(); updateBalances(); if(!$('shop-screen').hidden)renderShop(); toast('Signed out'); }
-async function getTokens(){
-  if(!signedIn()){ toast('Sign in to get tokens'); openAuth('signin'); return; }
-  try{ const r=await api('/api/wallet/credit',{method:'POST',body:{amount:200}}); currentUser.tokenBalance=r.tokenBalance;
-    updateBalances(); renderShop(); toast('+200 tokens (demo — Billplz purchase connects later)');
-  }catch(e){ toast(e.message); } }
+async function signOut(){ authToken=null; currentUser=null; localStorage.removeItem('chess-auth-token');
+  await ensureSession();          // drop back to a fresh guest session
+  if(!$('shop-screen').hidden)renderShop(); toast('Signed out'); }
+// ── Token Store (real Billplz purchases) ──
+async function openStore(){
+  if(!currentUser){ toast('Cannot reach the server — check your connection'); return; }
+  showOverlay('store-overlay',true);
+  $('storeBody').innerHTML='<p class="muted">Loading packages…</p>';
+  try{ const {packages}=await api('/api/payments/packages'); renderStore(packages); }
+  catch(e){ $('storeBody').innerHTML=`<p class="err">Could not load packages: ${e.message}</p>`; }
+}
+function renderStore(packages){
+  $('storeBody').innerHTML = packages.map(p=>`
+    <div class="item" style="flex-direction:row;justify-content:space-between;align-items:center;text-align:left">
+      <div><div class="nm">${p.name}</div><div class="muted">🪙 ${p.tokens} tokens</div></div>
+      <button class="small-btn" data-action="buy-tokens" data-pkg="${p.id}">RM ${p.priceMYR}</button>
+    </div>`).join('');
+}
+async function buyTokens(pkgId){
+  try{ toast('Opening secure payment…');
+    const { url } = await api('/api/payments/create-bill',{method:'POST',body:{packageId:pkgId}});
+    window.location.href = url;   // redirect to the Billplz payment page
+  }catch(e){ toast('Payment error: '+e.message); }
+}
+// After Billplz redirects back, Billplz appends billplz[...] query params.
+function handlePaymentReturn(){
+  const q=new URLSearchParams(location.search);
+  if(q.has('billplz[paid]')){
+    const paid=q.get('billplz[paid]')==='true';
+    toast(paid ? 'Payment received — tokens added! 🎉' : 'Payment was not completed');
+    history.replaceState({}, '', location.pathname);
+    if(paid) setTimeout(refreshBalance, 1200); // give the webhook a moment to credit
+  }
+}
 
 document.addEventListener('click',(e)=>{
   const btn=e.target.closest('[data-action]'); if(!btn)return; const a=btn.dataset.action;
@@ -944,7 +991,9 @@ document.addEventListener('click',(e)=>{
   else if(a==='create-room'){ createRoom(); }
   else if(a==='join-room'){ joinRoom(); }
   else if(a==='shop'){ renderShop(); showScreen('shop-screen'); }
-  else if(a==='get-tokens'){ getTokens(); }
+  else if(a==='get-tokens'){ openStore(); }
+  else if(a==='buy-tokens'){ buyTokens(btn.dataset.pkg); }
+  else if(a==='close-store'){ showOverlay('store-overlay',false); }
   else if(a==='buy'){ buyItem(btn.dataset.cat, btn.dataset.id); }
   else if(a==='equip'){ equipItem(btn.dataset.cat, btn.dataset.id); }
   else if(a==='sell'){ sellItem(btn.dataset.cat, btn.dataset.id); }
@@ -987,9 +1036,7 @@ bindSwitch('sw-hints','hints'); bindSwitch('sw-sound','sound'); bindSwitch('sw-a
 $('serverUrl').addEventListener('change',e=>{ settings.serverUrl=e.target.value.trim(); saveSettings(); });
 
 // ══════════════════════════ ONLINE ══════════════════════════
-function serverUrl(){ if(settings.serverUrl)return settings.serverUrl;
-  if(location.protocol==='http:'||location.protocol==='https:'){ const p=location.protocol==='https:'?'wss:':'ws:'; return `${p}//${location.host}`; }
-  return 'ws://localhost:8080'; }
+function serverUrl(){ return settings.serverUrl || ('wss://'+DEFAULT_BACKEND); }
 function openOnline(){ showOverlay('online-overlay',true); onlineHome(); }
 function onlineHome(){
   $('online-card').innerHTML=`
@@ -1052,7 +1099,8 @@ function onSocketMessage(ev){ let m; try{ m=JSON.parse(ev.data); }catch{ return;
 }
 
 // ── Boot ──
-applyCosmetics(); updateAccountUI(); updateBalances(); refreshAccount();
+applyCosmetics(); updateAccountUI(); updateBalances();
+ensureSession().then(handlePaymentReturn);
 showScreen('menu-screen');
 </script>
 </body>
