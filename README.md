@@ -9,7 +9,7 @@ withdrawn or cashed out.
 chess/
 ├── backend/     # Node.js + Express API (deploy to Render)
 │                #   wallet, tokens, Billplz payments + webhook
-└── frontend/    # Next.js store + chess board (deploy to Vercel)  [coming next]
+└── frontend/    # Next.js store + chess board (deploy to Vercel)  
 ```
 
 ## Deployment
