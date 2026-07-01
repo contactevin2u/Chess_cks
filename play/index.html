@@ -953,15 +953,27 @@ async function openStore(){
   catch(e){ $('storeBody').innerHTML=`<p class="err">Could not load packages: ${e.message}</p>`; }
 }
 function renderStore(packages){
-  $('storeBody').innerHTML = packages.map(p=>`
+  const list = packages.map(p=>`
     <div class="item" style="flex-direction:row;justify-content:space-between;align-items:center;text-align:left">
       <div><div class="nm">${p.name}</div><div class="muted">🪙 ${p.tokens} tokens</div></div>
       <button class="small-btn" data-action="buy-tokens" data-pkg="${p.id}">RM ${p.priceMYR}</button>
     </div>`).join('');
+  // Guests must provide a real email — Billplz needs it for the bank payment + receipt.
+  const guestFields = !isRealUser() ? `
+    <div class="auth-field"><label>Your email (for the receipt)</label><input type="email" id="buyerEmail" placeholder="you@example.com"></div>
+    <div class="auth-field"><label>Your name (optional)</label><input type="text" id="buyerName" placeholder="Name"></div>
+    <hr style="border-color:#45423e;opacity:.4">` : '';
+  $('storeBody').innerHTML = guestFields + list;
 }
 async function buyTokens(pkgId){
+  const body = { packageId: pkgId };
+  if(!isRealUser()){
+    const email=($('buyerEmail')?.value||'').trim(), name=($('buyerName')?.value||'').trim();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ toast('Enter a valid email to pay'); return; }
+    body.email=email; body.name=name;
+  }
   try{ toast('Opening secure payment…');
-    const { url } = await api('/api/payments/create-bill',{method:'POST',body:{packageId:pkgId}});
+    const { url } = await api('/api/payments/create-bill',{method:'POST',body});
     window.location.href = url;   // redirect to the Billplz payment page
   }catch(e){ toast('Payment error: '+e.message); }
 }

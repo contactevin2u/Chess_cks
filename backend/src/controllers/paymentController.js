@@ -51,8 +51,15 @@ export async function createBillHandler(req, res) {
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
-    // Billplz requires an email; guests don't have one, so use a placeholder.
-    const buyerEmail = user.email || `guest-${user.user_id}@chess.local`;
+    // Billplz/FPX needs a REAL, valid email or the bank step fails.
+    // Prefer the account email; else a valid email the buyer typed at checkout.
+    const validEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e || '');
+    const typedEmail = (req.body?.email || '').trim();
+    const buyerEmail = user.email || (validEmail(typedEmail) ? typedEmail : null);
+    if (!buyerEmail) {
+      return res.status(400).json({ error: 'A valid email is required to pay' });
+    }
+    const buyerName = user.display_name || (req.body?.name || '').trim() || 'Chess Player';
 
     // 1) Create the Pending ledger row FIRST so we always have a record.
     const txRes = await query(
@@ -66,7 +73,7 @@ export async function createBillHandler(req, res) {
     // 2) Ask Billplz to create the bill.
     const bill = await createBill({
       amountCents: pkg.priceCents,
-      name: user.display_name || 'Chess Player',
+      name: buyerName,
       email: buyerEmail,
       description: `${pkg.name} — ${pkg.tokens} tokens`,
       callbackUrl: `${BACKEND_PUBLIC_URL}/api/payments/webhook`,
