@@ -29,7 +29,7 @@
   body {
     font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
     background:var(--bg); color:#fff; min-height:100dvh;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    display:flex; flex-direction:column; align-items:center; justify-content:safe center;
     padding:14px; overflow-x:hidden;
   }
   .screen { width:100%; max-width:620px; display:flex; flex-direction:column; align-items:center; gap:16px; }
@@ -140,8 +140,8 @@
   .pw-wrap input { flex:1; }
   .pw-toggle { width:46px; min-width:46px; height:46px; padding:0; background:#3d3a36; font-size:1.1rem; }
 
-  .overlay { position:fixed; inset:0; background:rgba(0,0,0,.6); display:flex; align-items:center;
-    justify-content:center; padding:16px; z-index:50; overflow:auto; }
+  .overlay { position:fixed; inset:0; background:rgba(0,0,0,.6); display:flex; align-items:safe center;
+    justify-content:safe center; padding:16px; z-index:50; overflow:auto; }
   .overlay[hidden] { display:none; }
   .card { background:var(--panel); border:1px solid #45423e; border-radius:16px; padding:22px;
     width:100%; max-width:390px; display:flex; flex-direction:column; gap:14px; }
@@ -171,10 +171,11 @@
     <div class="title">CHESS</div>
     <div class="subtitle">Play on one device, or across two</div>
     <div id="accountArea"></div>
-    <div class="balance">🪙 <span id="menuBal">0</span> tokens</div>
+    <div class="balance" data-action="get-tokens" style="cursor:pointer">🪙 <span id="menuBal">0</span> tokens · Buy</div>
     <div class="menu-buttons">
-      <button data-action="local">👥 Local Multiplayer <small>(pass &amp; play)</small></button>
-      <button data-action="online">🌐 Online Multiplayer <small>(two devices)</small></button>
+      <button data-action="get-tokens">🪙 Buy Tokens</button>
+      <button data-action="local" class="secondary">👥 Local Multiplayer <small>(pass &amp; play)</small></button>
+      <button data-action="online" class="secondary">🌐 Online Multiplayer <small>(two devices)</small></button>
       <button data-action="ai-setup" class="secondary">🤖 vs Computer</button>
       <button data-action="shop" class="secondary">🛍️ Shop</button>
       <button data-action="options" class="ghost">⚙️ Options</button>
