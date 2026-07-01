@@ -86,6 +86,15 @@
 
   .controls { display:flex; gap:10px; width:100%; max-width:560px; }
   .controls button { flex:1; }
+  .panel { width:min(94vw,560px); max-width:560px; display:flex; flex-direction:column; gap:6px; }
+  .cap-row { display:flex; align-items:center; gap:6px; min-height:26px; font-size:1.25rem; }
+  .cap-label { font-size:.9rem; opacity:.6; }
+  .cap-pieces { letter-spacing:-1px; text-shadow:0 1px 2px #000; }
+  .adv { font-size:.85rem; color:#cddc9a; font-weight:700; margin-left:auto; }
+  .moves { background:var(--panel); border:1px solid #45423e; border-radius:10px; padding:8px 12px;
+    max-height:104px; overflow-y:auto; font-size:.9rem; line-height:1.9; }
+  .mv-no { color:#888; margin-right:3px; }
+  .mv { display:inline-block; min-width:46px; }
 
   .overlay { position:fixed; inset:0; background:rgba(0,0,0,.6); display:flex; align-items:center;
     justify-content:center; padding:16px; z-index:50; overflow:auto; }
@@ -173,7 +182,13 @@
     <div class="clock" id="clockBot" hidden></div>
     <div class="controls">
       <button data-action="restart" class="secondary">↻ Restart</button>
+      <button data-action="undo" class="secondary" id="undoBtn">↶ Undo</button>
       <button data-action="flip" class="secondary">⇅ Flip</button>
+    </div>
+    <div class="panel">
+      <div class="cap-row"><span class="cap-label">♔</span><span id="capW" class="cap-pieces"></span><span id="advW" class="adv"></span></div>
+      <div class="moves" id="moveList"></div>
+      <div class="cap-row"><span class="cap-label">♚</span><span id="capB" class="cap-pieces"></span><span id="advB" class="adv"></span></div>
     </div>
   </div>
 
@@ -315,6 +330,38 @@ function hasAnyLegalMove(bd,cast,ept,white){
   for(let r=0;r<8;r++)for(let c=0;c<8;c++) if(bd[r][c]&&isWhite(bd[r][c])===white&&legalMovesSq(bd,cast,ept,r,c).length) return true;
   return false;
 }
+// Standard algebraic notation for one move (e4, Nf3, exd5, O-O, e8=Q+, Ra1#).
+function san(bd,cast,ept,mv,promo='q'){
+  const {fr,fc,tr,tc,special}=mv;
+  if(special==='castleK')return finishSan(bd,cast,ept,mv,promo,'O-O');
+  if(special==='castleQ')return finishSan(bd,cast,ept,mv,promo,'O-O-O');
+  const piece=bd[fr][fc], t=piece.toLowerCase(), files='abcdefgh';
+  const dest=files[tc]+(8-tr), isCap=!!bd[tr][tc]||special==='ep';
+  let s;
+  if(t==='p'){ s=(isCap?files[fc]+'x':'')+dest; if(tr===0||tr===7)s+='='+promo.toUpperCase(); }
+  else { s=piece.toUpperCase(); const others=[];
+    for(let r=0;r<8;r++)for(let c=0;c<8;c++) if((r!==fr||c!==fc)&&bd[r][c]===piece&&legalMovesSq(bd,cast,ept,r,c).some(m=>m.tr===tr&&m.tc===tc)) others.push([r,c]);
+    if(others.length){ const sameFile=others.some(o=>o[1]===fc), sameRank=others.some(o=>o[0]===fr);
+      s+= !sameFile ? files[fc] : !sameRank ? (8-fr) : files[fc]+(8-fr); }
+    s+=(isCap?'x':'')+dest; }
+  return finishSan(bd,cast,ept,mv,promo,s);
+}
+function finishSan(bd,cast,ept,mv,promo,base){
+  const st=applyMove(bd,cast,ept,mv,promo), opp=!isWhite(bd[mv.fr][mv.fc]);
+  if(inCheck(st.board,opp)) base += hasAnyLegalMove(st.board,st.castling,st.ep,opp)?'+':'#';
+  return base;
+}
+function insufficientMaterial(bd){
+  const minors=[]; let others=false;
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){ const p=bd[r][c]; if(!p)continue; const t=p.toLowerCase();
+    if(t==='k')continue; if(t==='b'||t==='n')minors.push({t,color:(r+c)%2}); else others=true; }
+  if(others)return false;
+  if(minors.length<=1)return true;
+  if(minors.length===2&&minors.every(m=>m.t==='b')&&minors[0].color===minors[1].color)return true;
+  return false;
+}
+function posKey(bd,tn,cast,epx){ return bd.map(r=>r.map(x=>x||'.').join('')).join('/')+' '+tn+' '+
+  (cast.K?'K':'')+(cast.Q?'Q':'')+(cast.k?'k':'')+(cast.q?'q':'')+' '+(epx?epx.join(''):'-'); }
 
 // ══════════════════════════ AI (minimax) ══════════════════════════
 const DIFFICULTY = {
@@ -368,6 +415,7 @@ function computeAiMove(){
 
 // ══════════════════════════ GAME STATE ══════════════════════════
 let board, turn, castling, ep, selected, legalForSelected, flipped, gameOver, lastMove, pendingPromo=null;
+let history=[], sanList=[], posCounts={}, halfmove=0;   // for undo, notation & draw rules
 let game = { mode:'local', playerColor:'w', aiColor:'b', difficulty:3, timeMs:0, incMs:0 };
 let socket = null;
 const boardEl=$('board'), statusEl=$('status');
@@ -376,33 +424,56 @@ function newGame(){
   board = START.map(r=>r.slice());
   turn='w'; castling={K:true,Q:true,k:true,q:true}; ep=null;
   selected=null; legalForSelected=[]; gameOver=false; lastMove=null; pendingPromo=null;
+  history=[]; sanList=[]; halfmove=0; posCounts={}; posCounts[posKey(board,turn,castling,ep)]=1;
   clockInit(game.timeMs, game.incMs);
-  render(); updateStatus();
+  render(); renderPanel(); updateStatus();
 }
 function startGame(){
   showScreen('game-screen');
   flipped = (game.playerColor==='b') && game.mode!=='local';
+  $('undoBtn').style.display = (game.mode==='online') ? 'none' : '';   // takeback only offline
   newGame(); maybeAiMove();
 }
 function playMove(fr,fc,tr,tc,promo,{broadcast=true}={}){
   const mover=turn;
   const mv=legalMovesSq(board,castling,ep,fr,fc).find(m=>m.tr===tr&&m.tc===tc);
   if(!mv) return; // safety: ignore anything illegal
+  // snapshot for undo (pre-move state) + notation (uses pre-move board)
+  history.push({ board:board.map(r=>r.slice()), turn, castling:{...castling}, ep, halfmove, lastMove });
+  const notation = san(board,castling,ep,mv, promo||'q');
+  const isCapture = !!board[tr][tc] || mv.special==='ep';
+  const isPawn = board[fr][fc].toLowerCase()==='p';
   const st=applyMove(board,castling,ep,mv, promo||'q');
   board=st.board; castling=st.castling; ep=st.ep;
   lastMove={fr,fc,tr,tc}; selected=null; legalForSelected=[];
   turn = mover==='w'?'b':'w';
+  halfmove = (isCapture||isPawn) ? 0 : halfmove+1;                 // fifty-move counter
+  const key=posKey(board,turn,castling,ep); posCounts[key]=(posCounts[key]||0)+1; // repetition
+  sanList.push(notation);
   playSound(); clockOnMove(mover);
   if(settings.autoflip && game.mode==='local') flipped=(turn==='b');
-  render(); updateStatus();
+  render(); renderPanel(); updateStatus();
   if(game.mode==='online'&&broadcast&&socket&&socket.readyState===1)
     socket.send(JSON.stringify({type:'move',from:[fr,fc],to:[tr,tc],promo:promo||'q'}));
   if(game.mode==='ai') maybeAiMove();
 }
+function undo(){
+  if(game.mode==='online' || pendingPromo) return;
+  const steps = (game.mode==='ai') ? 2 : 1;   // in AI mode, take back your move + the reply
+  for(let i=0;i<steps && history.length;i++){
+    const key=posKey(board,turn,castling,ep); if(posCounts[key])posCounts[key]--;
+    const s=history.pop();
+    board=s.board; turn=s.turn; castling=s.castling; ep=s.ep; halfmove=s.halfmove; lastMove=s.lastMove;
+    sanList.pop();
+  }
+  gameOver=false; selected=null; legalForSelected=[];
+  showOverlay('over-overlay',false);
+  render(); renderPanel(); updateStatus();
+}
 function maybeAiMove(){
   if(game.mode!=='ai'||gameOver) return;
   if(turn!==game.aiColor) return;
-  setTimeout(()=>{ if(gameOver)return; const mv=computeAiMove();
+  setTimeout(()=>{ if(gameOver||turn!==game.aiColor)return; const mv=computeAiMove();  // re-check: player may have undone
     if(mv) playMove(mv.fr,mv.fc,mv.tr,mv.tc,'q',{broadcast:false}); }, 300);
 }
 function onSquareClick(r,c){
@@ -448,6 +519,13 @@ function updateStatus(){
       showGameOver('🤝','Stalemate','Draw — the player to move has no legal moves but is not in check');
     }
     return; }
+  // Draw by rule (game continues playable, but these force a draw)
+  let drawReason=null;
+  if(insufficientMaterial(board)) drawReason='Insufficient material';
+  else if(halfmove>=100) drawReason='Fifty-move rule';
+  else if((posCounts[posKey(board,turn,castling,ep)]||0)>=3) drawReason='Threefold repetition';
+  if(drawReason){ gameOver=true; clockStop(); statusEl.textContent=`Draw — ${drawReason} 🤝`;
+    showGameOver('🤝','Draw',drawReason); return; }
   let who=side;
   if(game.mode==='online') who=(turn===game.playerColor)?'Your move':"Opponent's move";
   if(game.mode==='ai')     who=(turn===game.playerColor)?'Your move':'Computer thinking…';
@@ -473,6 +551,23 @@ function render(){
     frag.appendChild(sq);
   }
   boardEl.replaceChildren(frag);
+}
+// Captured pieces, material advantage, and the move-history list.
+function renderPanel(){
+  const cur={}; for(let r=0;r<8;r++)for(let c=0;c<8;c++){ const p=board[r][c]; if(p)cur[p]=(cur[p]||0)+1; }
+  const START_N={p:8,n:2,b:2,r:2,q:1};
+  const missing=(up)=>{ const out=[]; for(const[pc,n]of Object.entries(START_N)){ const k=up?pc.toUpperCase():pc;
+    const miss=n-(cur[k]||0); for(let i=0;i<miss;i++)out.push(k); } return out; };
+  const capByWhite=missing(false), capByBlack=missing(true);     // black pieces gone / white pieces gone
+  const val=arr=>arr.reduce((s,p)=>s+VALUE[p.toLowerCase()]/100,0);
+  const adv=Math.round(val(capByWhite)-val(capByBlack));
+  $('capW').textContent=capByWhite.map(p=>GLYPH[p]).join('');
+  $('capB').textContent=capByBlack.map(p=>GLYPH[p]).join('');
+  $('advW').textContent=adv>0?`+${adv}`:''; $('advB').textContent=adv<0?`+${-adv}`:'';
+  let html='';
+  for(let i=0;i<sanList.length;i+=2){ const n=i/2+1;
+    html+=`<span class="mv-no">${n}.</span><span class="mv">${sanList[i]}</span>`+(sanList[i+1]?`<span class="mv">${sanList[i+1]}</span>`:''); }
+  const ml=$('moveList'); ml.innerHTML=html||'<span class="muted">No moves yet</span>'; ml.scrollTop=ml.scrollHeight;
 }
 
 // ── Clock ──
@@ -525,6 +620,7 @@ document.addEventListener('click',(e)=>{
   else if(a==='menu'){ leaveOnline(); clockStop(); showOverlay('over-overlay',false); showScreen('menu-screen'); }
   else if(a==='restart'){ showOverlay('over-overlay',false); if(game.mode==='online'&&socket)socket.send(JSON.stringify({type:'restart'})); newGame(); maybeAiMove(); }
   else if(a==='flip'){ flipped=!flipped; render(); renderClocks(); }
+  else if(a==='undo'){ undo(); }
   else if(a==='create-room'){ createRoom(); }
   else if(a==='join-room'){ joinRoom(); }
 });
