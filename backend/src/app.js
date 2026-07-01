@@ -20,6 +20,23 @@ app.use(express.urlencoded({ extended: true }));
 // Health check (Render pings this).
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
+// Config diagnostics — shows which env vars are set (secrets as booleans only).
+app.get('/health/config', (_req, res) => {
+  const has = (k) => !!process.env[k];
+  res.json({
+    NODE_ENV: process.env.NODE_ENV || null,
+    JWT_SECRET: has('JWT_SECRET'),
+    DATABASE_URL: has('DATABASE_URL'),
+    FRONTEND_URL: process.env.FRONTEND_URL || null,
+    BACKEND_PUBLIC_URL: process.env.BACKEND_PUBLIC_URL || null,
+    BILLPLZ_API_URL: process.env.BILLPLZ_API_URL || null,
+    BILLPLZ_SECRET_KEY: has('BILLPLZ_SECRET_KEY'),
+    BILLPLZ_COLLECTION_ID: has('BILLPLZ_COLLECTION_ID'),
+    BILLPLZ_XSIGN_KEY: has('BILLPLZ_XSIGN_KEY'),
+    SMTP_HOST: process.env.SMTP_HOST || null,
+  });
+});
+
 // Database diagnostics — reports connection + table status (no data exposed).
 app.get('/health/db', async (_req, res) => {
   const hasDatabaseUrl = !!process.env.DATABASE_URL;

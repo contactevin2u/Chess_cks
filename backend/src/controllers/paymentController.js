@@ -84,7 +84,8 @@ export async function createBillHandler(req, res) {
     return res.json({ url: bill.url, transactionId });
   } catch (err) {
     console.error('[create-bill] error', err);
-    return res.status(500).json({ error: 'Failed to create bill' });
+    // Temporary diagnostic detail so payment-setup issues are visible.
+    return res.status(500).json({ error: 'Failed to create bill', detail: err.message });
   }
 }
 
