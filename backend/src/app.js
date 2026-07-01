@@ -3,6 +3,8 @@ import cors from 'cors';
 import 'dotenv/config';
 
 import paymentsRouter from './routes/payments.js';
+import authRouter from './routes/auth.js';
+import walletRouter from './routes/wallet.js';
 
 const app = express();
 
@@ -21,6 +23,8 @@ app.use(express.urlencoded({ extended: true }));
 // Health check (Render pings this).
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
+app.use('/api/auth', authRouter);
+app.use('/api/wallet', walletRouter);
 app.use('/api/payments', paymentsRouter);
 
 // 404 fallback

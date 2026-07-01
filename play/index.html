@@ -9,9 +9,20 @@
     --light:#eeeed2; --dark:#769656; --sel:#f6f669; --move:rgba(20,85,30,.55);
     --bg:#262421; --panel:#322f2c; --accent:#4a8f3a;
   }
-  body[data-theme="blue"]  { --light:#dee3e6; --dark:#5a7ca0; --move:rgba(30,60,90,.55); }
-  body[data-theme="brown"] { --light:#f0d9b5; --dark:#b58863; --move:rgba(90,60,30,.5); }
-  body[data-theme="gray"]  { --light:#dcdcdc; --dark:#8f8f8f; --move:rgba(40,40,40,.5); }
+  body[data-theme="blue"]     { --light:#dee3e6; --dark:#5a7ca0; --move:rgba(30,60,90,.55); }
+  body[data-theme="brown"]    { --light:#f0d9b5; --dark:#b58863; --move:rgba(90,60,30,.5); }
+  body[data-theme="gray"]     { --light:#dcdcdc; --dark:#8f8f8f; --move:rgba(40,40,40,.5); }
+  body[data-theme="midnight"] { --light:#c7d0e0; --dark:#3a4a6b; --move:rgba(20,40,80,.55); }
+  body[data-theme="rose"]     { --light:#f5dfe6; --dark:#b05a78; --move:rgba(120,40,70,.5); }
+  body[data-theme="marble"]   { --light:#f4f4f2; --dark:#a9adb0; --move:rgba(60,60,70,.45); }
+
+  /* Premium piece sets (board uses body[data-pieces]) */
+  body[data-pieces="neon"]   .white-piece .piece { color:#8ff6ff; text-shadow:0 0 6px #24d3ff,0 0 13px #24d3ff; }
+  body[data-pieces="neon"]   .black-piece .piece { color:#ff9bf0; text-shadow:0 0 6px #ff36c8,0 0 13px #ff36c8; }
+  body[data-pieces="gold"]   .white-piece .piece { background:linear-gradient(#fff7c4,#eabf4c 55%,#a9791f); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  body[data-pieces="gold"]   .black-piece .piece { background:linear-gradient(#c9a24a,#7a5a12 55%,#33240a); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  body[data-pieces="marble"] .white-piece .piece { background:linear-gradient(#ffffff,#e2e6e9 55%,#b3b8bc); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  body[data-pieces="marble"] .black-piece .piece { background:linear-gradient(#71767a,#3a3d40 55%,#141516); -webkit-background-clip:text; background-clip:text; color:transparent; }
 
   * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
   html, body { height:100%; }
@@ -96,6 +107,39 @@
   .mv-no { color:#888; margin-right:3px; }
   .mv { display:inline-block; min-width:46px; }
 
+  /* Balance pill + Shop */
+  .balance { display:inline-flex; align-items:center; gap:6px; background:#2c2a27; border:1px solid #45423e;
+    border-radius:999px; padding:6px 14px; font-weight:700; color:#f6c945; }
+  .shop-head { position:sticky; top:0; z-index:10; background:var(--bg); padding:10px 0; width:100%; max-width:560px; display:flex; align-items:center; gap:10px; }
+  .shop-head .icon-btn { background:var(--accent); border-color:var(--accent); font-size:1.5rem; }
+  .shop-title { flex:1; text-align:center; font-size:1.2rem; font-weight:800; }
+  #shopBody { width:100%; max-width:560px; display:flex; flex-direction:column; gap:20px; }
+  .shop-cat h3 { font-size:1rem; margin-bottom:10px; color:#cfcfcf; }
+  .items { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:10px; }
+  .item { background:var(--panel); border:1px solid #45423e; border-radius:12px; padding:12px; display:flex;
+    flex-direction:column; align-items:center; gap:8px; text-align:center; }
+  .item.equipped { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; }
+  .item .pv { height:46px; display:flex; align-items:center; justify-content:center; font-size:2rem; gap:2px; }
+  .item .nm { font-size:.85rem; font-weight:600; }
+  .item button { padding:8px 10px; font-size:.8rem; border-radius:8px; }
+  .item .cost { color:#f6c945; font-weight:700; font-size:.85rem; }
+  .swatch { width:44px; height:44px; border-radius:8px; overflow:hidden; display:grid; grid-template-columns:1fr 1fr; }
+  .swatch span { width:100%; height:100%; }
+  .badge-equipped { font-size:.75rem; color:var(--accent); font-weight:700; }
+  #fx { position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:80; display:none; }
+
+  /* Account / auth */
+  #accountArea { display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:center; }
+  .acct-name { font-size:.9rem; color:#cfcfcf; }
+  .link-btn { background:none; border:none; color:#9ccb6a; text-decoration:underline; cursor:pointer; font-size:.85rem; width:auto; padding:4px; }
+  .auth-field { display:flex; flex-direction:column; gap:6px; text-align:left; }
+  .auth-field label { font-size:.82rem; color:#bbb; }
+  .auth-links { display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px; }
+  .small-btn { width:auto; padding:8px 12px; font-size:.85rem; }
+  .pw-wrap { display:flex; gap:6px; align-items:center; }
+  .pw-wrap input { flex:1; }
+  .pw-toggle { width:46px; min-width:46px; height:46px; padding:0; background:#3d3a36; font-size:1.1rem; }
+
   .overlay { position:fixed; inset:0; background:rgba(0,0,0,.6); display:flex; align-items:center;
     justify-content:center; padding:16px; z-index:50; overflow:auto; }
   .overlay[hidden] { display:none; }
@@ -126,12 +170,27 @@
     <div class="logo">♟️</div>
     <div class="title">CHESS</div>
     <div class="subtitle">Play on one device, or across two</div>
+    <div id="accountArea"></div>
+    <div class="balance">🪙 <span id="menuBal">0</span> tokens</div>
     <div class="menu-buttons">
       <button data-action="local">👥 Local Multiplayer <small>(pass &amp; play)</small></button>
       <button data-action="online">🌐 Online Multiplayer <small>(two devices)</small></button>
       <button data-action="ai-setup" class="secondary">🤖 vs Computer</button>
+      <button data-action="shop" class="secondary">🛍️ Shop</button>
       <button data-action="options" class="ghost">⚙️ Options</button>
     </div>
+  </div>
+
+  <!-- ══ SHOP ══ -->
+  <div class="screen" id="shop-screen" hidden>
+    <div class="shop-head">
+      <button class="icon-btn" data-action="menu" title="Back">←</button>
+      <div class="shop-title">🛍️ Shop</div>
+      <div class="balance">🪙 <span id="shopBal">0</span></div>
+    </div>
+    <button data-action="get-tokens">＋ Get Tokens</button>
+    <div id="shopBody"></div>
+    <button data-action="menu" class="secondary" style="max-width:340px">← Back to Menu</button>
   </div>
 
   <!-- ══ VS COMPUTER SETUP ══ -->
@@ -196,12 +255,6 @@
   <div class="overlay" id="options-overlay" hidden>
     <div class="card">
       <h2>⚙️ Options</h2>
-      <div class="row"><label>Board theme</label>
-        <div class="seg" id="themeSeg">
-          <button data-theme="green">Green</button><button data-theme="blue">Blue</button>
-          <button data-theme="brown">Brown</button><button data-theme="gray">Gray</button>
-        </div>
-      </div>
       <div class="row"><label>Show move hints</label><div class="switch" id="sw-hints"></div></div>
       <div class="row"><label>Sound effects</label><div class="switch" id="sw-sound"></div></div>
       <div class="row"><label>Auto-flip each turn</label><div class="switch" id="sw-autoflip"></div></div>
@@ -216,6 +269,9 @@
 
   <!-- ══ ONLINE OVERLAY ══ -->
   <div class="overlay" id="online-overlay" hidden><div class="card" id="online-card"></div></div>
+
+  <!-- ══ AUTH OVERLAY ══ -->
+  <div class="overlay" id="auth-overlay" hidden><div class="card" id="auth-card"></div></div>
 
   <!-- ══ PROMOTION OVERLAY ══ -->
   <div class="overlay" id="promo-overlay" hidden>
@@ -236,6 +292,7 @@
     </div>
   </div>
 
+  <canvas id="fx"></canvas>
   <div id="errbar"></div>
 
 <script>
@@ -249,6 +306,69 @@ let settings = load();
 function load(){ try { return {...DEFAULTS, ...JSON.parse(localStorage.getItem('chess-settings')||'{}')}; } catch { return {...DEFAULTS}; } }
 function saveSettings(){ localStorage.setItem('chess-settings', JSON.stringify(settings)); }
 
+// ── Cosmetics catalog + wallet (persisted) ──
+const COSMETICS = {
+  theme:   { label:'🎨 Board Themes', items:[
+    {id:'green',name:'Classic Green',cost:0}, {id:'blue',name:'Ocean Blue',cost:40},
+    {id:'brown',name:'Walnut Wood',cost:40}, {id:'gray',name:'Slate',cost:40},
+    {id:'midnight',name:'Midnight',cost:80}, {id:'rose',name:'Rose',cost:80}, {id:'marble',name:'Marble',cost:120} ]},
+  pieces:  { label:'♟️ Piece Sets', items:[
+    {id:'classic',name:'Classic',cost:0}, {id:'neon',name:'Neon Glow',cost:80},
+    {id:'marble',name:'Marble',cost:120}, {id:'gold',name:'Gold',cost:150} ]},
+  sound:   { label:'🔊 Move Sounds', items:[
+    {id:'classic',name:'Classic',cost:0}, {id:'wood',name:'Wood Click',cost:30},
+    {id:'soft',name:'Soft',cost:30}, {id:'arcade',name:'Arcade',cost:50} ]},
+  victory: { label:'🎉 Victory Effect', items:[
+    {id:'none',name:'None',cost:0}, {id:'confetti',name:'Confetti',cost:70}, {id:'fireworks',name:'Fireworks',cost:120} ]},
+};
+const COS_DEFAULT = { tokens:100,
+  owned:{ theme:['green'], pieces:['classic'], sound:['classic'], victory:['none'] },
+  equipped:{ theme:'green', pieces:'classic', sound:'classic', victory:'none' } };
+let cos = loadCos();
+function loadCos(){ try{ const s={...COS_DEFAULT, ...JSON.parse(localStorage.getItem('chess-cosmetics')||'{}')};
+  s.owned={...COS_DEFAULT.owned, ...s.owned}; s.equipped={...COS_DEFAULT.equipped, ...s.equipped}; return s;
+  }catch{ return JSON.parse(JSON.stringify(COS_DEFAULT)); } }
+function saveCos(){ localStorage.setItem('chess-cosmetics', JSON.stringify(cos)); updateBalances(); }
+function updateBalances(){ const b=getBalance(); const m=$('menuBal'),s=$('shopBal'); if(m)m.textContent=b; if(s)s.textContent=b; }
+function applyCosmetics(){ document.body.dataset.theme=cos.equipped.theme; document.body.dataset.pieces=cos.equipped.pieces; }
+
+// ── Accounts (real backend API) ──
+let authToken = localStorage.getItem('chess-auth-token') || null;
+let currentUser = null;                                   // null = anonymous
+const signedIn = () => !!currentUser;
+const getBalance = () => signedIn() ? (currentUser.tokenBalance||0) : cos.tokens;
+
+function apiBase(){
+  if(settings.serverUrl) return settings.serverUrl.replace(/^wss/,'https').replace(/^ws/,'http');
+  if(location.protocol==='http:'||location.protocol==='https:') return location.origin;
+  return 'http://localhost:8080';   // opened from a file:// — assume local backend
+}
+async function api(path,{method='GET',body}={}){
+  const headers={'Content-Type':'application/json'};
+  if(authToken) headers.Authorization='Bearer '+authToken;
+  const res=await fetch(apiBase()+path,{method,headers,body:body?JSON.stringify(body):undefined});
+  let data={}; try{ data=await res.json(); }catch{}
+  if(!res.ok) throw new Error(data.error || ('Request failed ('+res.status+')'));
+  return data;
+}
+async function refreshAccount(){
+  if(authToken){
+    try{ const {user}=await api('/api/auth/me'); currentUser=user; }
+    catch{ authToken=null; currentUser=null; localStorage.removeItem('chess-auth-token'); }
+  } else currentUser=null;
+  updateAccountUI(); updateBalances();
+}
+function updateAccountUI(){
+  const a=$('accountArea'); if(!a)return;
+  if(signedIn()){
+    a.innerHTML=`<span class="acct-name">👤 ${currentUser.displayName||currentUser.email}</span>
+      <button class="link-btn" data-action="sign-out">Sign out</button>`;
+  } else {
+    a.innerHTML=`<button class="small-btn secondary" data-action="account">👤 Sign In / Sign Up</button>
+      <span class="acct-name">or play as guest</span>`;
+  }
+}
+
 // ══════════════════════════ ENGINE (full rules) ══════════════════════════
 const START = [
   ['r','n','b','q','k','b','n','r'],['p','p','p','p','p','p','p','p'],
@@ -256,6 +376,9 @@ const START = [
   [null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],
   ['P','P','P','P','P','P','P','P'],['R','N','B','Q','K','B','N','R']];
 const GLYPH = { K:'♔',Q:'♕',R:'♖',B:'♗',N:'♘',P:'♙', k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟' };
+// Solid glyphs used by premium sets (neon/gold/marble) — colour tells the sides apart via CSS.
+const FILLED = { k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟' };
+function glyphFor(piece){ return cos.equipped.pieces==='classic' ? GLYPH[piece] : FILLED[piece.toLowerCase()]; }
 const VALUE = { p:100,n:320,b:330,r:500,q:900,k:20000 };
 const isWhite = p => !!p && p===p.toUpperCase();
 const inB = (r,c)=> r>=0&&r<8&&c>=0&&c<8;
@@ -511,9 +634,11 @@ function updateStatus(){
   const white=(turn==='w'), side=white?'White':'Black';
   const checked=inCheck(board,white), canMove=hasAnyLegalMove(board,castling,ep,white);
   if(!canMove){ gameOver=true; clockStop(); render();
-    if(checked){ const winner=white?'Black':'White';
+    if(checked){ const winner=white?'Black':'White', winColor=white?'b':'w';
       statusEl.textContent=`Checkmate — ${winner} wins 🏆`;
       showGameOver('🏆','Checkmate!',`${winner} wins`);
+      const celebrate = (game.mode==='local') || (winColor===game.playerColor);
+      if(celebrate) playVictory();
     } else {
       statusEl.textContent='Stalemate — draw 🤝';
       showGameOver('🤝','Stalemate','Draw — the player to move has no legal moves but is not in check');
@@ -544,7 +669,7 @@ function render(){
     const piece=board[r][c];
     if(piece){ sq.classList.add(isWhite(piece)?'white-piece':'black-piece');
       if(piece==='K'&&cW)sq.classList.add('check-king'); if(piece==='k'&&cB)sq.classList.add('check-king');
-      const sp=document.createElement('span'); sp.className='piece'; sp.textContent=GLYPH[piece]; sq.appendChild(sp); }
+      const sp=document.createElement('span'); sp.className='piece'; sp.textContent=glyphFor(piece); sq.appendChild(sp); }
     if(settings.hints){ const mv=legalForSelected.find(m=>m.tr===r&&m.tc===c);
       if(mv){ if(piece||mv.special==='ep')sq.classList.add('capture'); const d=document.createElement('div'); d.className='dot'; sq.appendChild(d); } }
     sq.addEventListener('click',()=>onSquareClick(r,c));
@@ -597,16 +722,211 @@ function renderClocks(){
   paint($('clockTop'),top); paint($('clockBot'),bot);
 }
 
-// ── Sound ──
+// ── Sound (per equipped sound set) ──
 let audioCtx=null;
-function playSound(){ if(!settings.sound)return; try{ audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
-  const o=audioCtx.createOscillator(),g=audioCtx.createGain(); o.frequency.value=320; o.type='triangle';
-  g.gain.setValueAtTime(.15,audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.12);
-  o.connect(g).connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+.12); }catch{} }
+const SOUND_SETS = {
+  classic:{ type:'triangle', freq:320, dur:.12, gain:.15 },
+  wood:   { type:'square',   freq:180, dur:.06, gain:.20 },
+  soft:   { type:'sine',     freq:260, dur:.18, gain:.12 },
+  arcade: { type:'square',   freq:520, dur:.10, gain:.13 },
+};
+function playSoundSet(setId){ try{ audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
+  const s=SOUND_SETS[setId]||SOUND_SETS.classic;
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain(); o.type=s.type; o.frequency.value=s.freq;
+  g.gain.setValueAtTime(s.gain,audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+s.dur);
+  o.connect(g).connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+s.dur); }catch{} }
+function playSound(){ if(settings.sound) playSoundSet(cos.equipped.sound); }
+
+// ── Victory effects (canvas confetti / fireworks) ──
+function runFx(kind){
+  const cv=$('fx'); if(!cv)return; const ctx=cv.getContext('2d');
+  cv.width=window.innerWidth; cv.height=window.innerHeight; cv.style.display='block';
+  const colors=['#f6c945','#4a8f3a','#e04b4b','#4aa3df','#c060d0','#ffffff'];
+  let parts=[];
+  if(kind==='fireworks'){
+    for(let b=0;b<5;b++){ const cx=cv.width*(.2+.6*Math.random()), cy=cv.height*(.2+.35*Math.random()), col=colors[b%colors.length];
+      for(let i=0;i<44;i++){ const a=Math.PI*2*i/44, sp=1+Math.random()*4;
+        parts.push({fw:true,x:cx,y:cy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,s:3,c:col,life:1}); } }
+  } else {
+    for(let i=0;i<150;i++) parts.push({x:Math.random()*cv.width,y:-20-Math.random()*cv.height*0.6,
+      vx:(Math.random()-.5)*2,vy:2+Math.random()*4,rot:Math.random()*6,vr:(Math.random()-.5)*.3,s:6+Math.random()*7,c:colors[i%colors.length]});
+  }
+  const start=performance.now();
+  (function frame(t){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    for(const p of parts){
+      if(p.fw){ p.x+=p.vx; p.y+=p.vy; p.vy+=0.03; p.life-=0.012; ctx.globalAlpha=Math.max(0,p.life);
+        ctx.fillStyle=p.c; ctx.beginPath(); ctx.arc(p.x,p.y,p.s,0,7); ctx.fill(); }
+      else { p.x+=p.vx; p.y+=p.vy; p.vy+=0.05; p.rot+=p.vr; ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+        ctx.fillStyle=p.c; ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*0.6); ctx.restore(); }
+    }
+    ctx.globalAlpha=1;
+    if(t-start<2600) requestAnimationFrame(frame);
+    else { cv.style.display='none'; ctx.clearRect(0,0,cv.width,cv.height); }
+  })(start);
+}
+function playVictory(effect){ const v=effect||cos.equipped.victory; if(!v||v==='none')return; runFx(v); }
 
 // ══════════════════════════ SCREENS & UI ══════════════════════════
 function showScreen(id){ for(const s of document.querySelectorAll('.screen')) s.hidden=(s.id!==id); }
 function showOverlay(id,on){ $(id).hidden=!on; }
+
+// ── Shop ──
+const THEME_SWATCH={ green:['#eeeed2','#769656'], blue:['#dee3e6','#5a7ca0'], brown:['#f0d9b5','#b58863'],
+  gray:['#dcdcdc','#8f8f8f'], midnight:['#c7d0e0','#3a4a6b'], rose:['#f5dfe6','#b05a78'], marble:['#f4f4f2','#a9adb0'] };
+function previewHTML(cat,id){
+  if(cat==='theme'){ const [l,d]=THEME_SWATCH[id]||['#ccc','#888'];
+    return `<div class="swatch"><span style="background:${l}"></span><span style="background:${d}"></span><span style="background:${d}"></span><span style="background:${l}"></span></div>`; }
+  if(cat==='pieces') return piecePreview(id);
+  if(cat==='sound')  return '🔊';
+  if(cat==='victory') return id==='fireworks'?'🎆':id==='confetti'?'🎉':'∅';
+  return '';
+}
+function piecePreview(id){
+  const grad=(g)=>`<span style="background:linear-gradient(${g});-webkit-background-clip:text;background-clip:text;color:transparent">♚</span>`;
+  if(id==='neon')   return `<span style="color:#8ff6ff;text-shadow:0 0 6px #24d3ff">♚</span><span style="color:#ff9bf0;text-shadow:0 0 6px #ff36c8">♚</span>`;
+  if(id==='gold')   return grad('#fff7c4,#eabf4c,#a9791f')+grad('#c9a24a,#7a5a12,#33240a');
+  if(id==='marble') return grad('#fff,#e2e6e9,#b3b8bc')+grad('#71767a,#3a3d40,#141516');
+  return `<span style="color:#fff;text-shadow:0 1px 2px #000">♔</span><span style="color:#111">♚</span>`; // classic
+}
+function renderShop(){
+  updateBalances();
+  const body=$('shopBody'); body.innerHTML='';
+  for(const [cat,group] of Object.entries(COSMETICS)){
+    const sec=document.createElement('div'); sec.className='shop-cat';
+    let html=`<h3>${group.label}</h3><div class="items">`;
+    for(const it of group.items){
+      const owned=cos.owned[cat].includes(it.id), equipped=cos.equipped[cat]===it.id;
+      html+=`<div class="item${equipped?' equipped':''}"><div class="pv">${previewHTML(cat,it.id)}</div><div class="nm">${it.name}</div>`;
+      if(equipped)     html+=`<div class="badge-equipped">✓ Equipped</div>`;
+      else if(owned)   html+=`<button data-action="equip" data-cat="${cat}" data-id="${it.id}">Equip</button>`;
+      else             html+=`<button data-action="buy" data-cat="${cat}" data-id="${it.id}"><span class="cost">🪙 ${it.cost}</span></button>`;
+      if(owned && it.cost>0)                html+=`<button class="secondary" data-action="sell" data-cat="${cat}" data-id="${it.id}" style="padding:5px 8px;font-size:.72rem">Sell 🪙 ${Math.floor(it.cost*0.5)}</button>`;
+      if(cat==='sound')                     html+=`<button class="secondary" data-action="preview-sound" data-id="${it.id}" style="padding:4px 8px;font-size:.72rem">▶ Preview</button>`;
+      if(cat==='victory'&&it.id!=='none')   html+=`<button class="secondary" data-action="preview-victory" data-id="${it.id}" style="padding:4px 8px;font-size:.72rem">▶ Preview</button>`;
+      html+=`</div>`;
+    }
+    html+=`</div>`; sec.innerHTML=html; body.appendChild(sec);
+  }
+}
+async function buyItem(cat,id){
+  const it=COSMETICS[cat].items.find(x=>x.id===id); if(!it||cos.owned[cat].includes(id))return;
+  if(signedIn()){
+    try{ const r=await api('/api/wallet/spend',{method:'POST',body:{amount:it.cost}}); currentUser.tokenBalance=r.tokenBalance; }
+    catch(e){ toast(e.message==='Not enough tokens'?'Not enough tokens — tap “Get Tokens”':e.message); return; }
+  } else {
+    if(cos.tokens<it.cost){ toast('Not enough tokens — sign in to get more'); return; }
+    cos.tokens-=it.cost;
+  }
+  cos.owned[cat].push(id); cos.equipped[cat]=id;                 // auto-equip on purchase
+  saveCos(); applyCosmetics(); updateBalances(); renderShop(); toast(`Unlocked ${it.name}!`);
+}
+function equipItem(cat,id){ if(!cos.owned[cat].includes(id))return; cos.equipped[cat]=id; saveCos(); applyCosmetics(); renderShop(); }
+async function sellItem(cat,id){
+  const it=COSMETICS[cat].items.find(x=>x.id===id); if(!it||it.cost===0||!cos.owned[cat].includes(id))return;
+  const refund=Math.floor(it.cost*0.5);
+  cos.owned[cat]=cos.owned[cat].filter(x=>x!==id);
+  if(cos.equipped[cat]===id) cos.equipped[cat]=COSMETICS[cat].items.find(x=>x.cost===0).id; // fall back to free default
+  if(signedIn()){ try{ const r=await api('/api/wallet/credit',{method:'POST',body:{amount:refund}}); currentUser.tokenBalance=r.tokenBalance; }catch(e){ toast(e.message); } }
+  else cos.tokens+=refund;
+  saveCos(); applyCosmetics(); updateBalances(); renderShop(); toast(`Sold ${it.name} for 🪙 ${refund}`);
+}
+function toast(msg){ const t=document.createElement('div'); t.textContent=msg;
+  t.style.cssText='position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#333;border:1px solid #5a5a5a;color:#fff;padding:10px 16px;border-radius:10px;z-index:120;font-size:.9rem;box-shadow:0 6px 20px rgba(0,0,0,.4)';
+  document.body.appendChild(t); setTimeout(()=>t.remove(),1700); }
+
+// ── Auth overlay (Sign In / Sign Up / Forgot / Reset) ──
+function openAuth(mode,data){ renderAuth(mode||'signin', data||{}); showOverlay('auth-overlay',true); }
+function renderAuth(mode,data){
+  const err='<div class="err" id="authErr"></div>'; let h='';
+  const pw=(id)=>`<div class="pw-wrap"><input type="password" id="${id}" placeholder="••••••"><button class="pw-toggle" data-action="toggle-pw" data-target="${id}">👁</button></div>`;
+  if(mode==='signin'){
+    h=`<h2>Sign In</h2>
+      <div class="auth-field"><label>Email</label><input type="email" id="authEmail" placeholder="you@example.com"></div>
+      <div class="auth-field"><label>Password</label>${pw('authPass')}</div>${err}
+      <button data-action="do-signin">Sign In</button>
+      <div class="auth-links">
+        <button class="link-btn" data-action="auth-mode" data-mode="forgot">Forgot password?</button>
+        <button class="link-btn" data-action="auth-mode" data-mode="signup">Create account</button></div>
+      <button class="ghost" data-action="close-auth">Cancel</button>`;
+  } else if(mode==='signup'){
+    h=`<h2>Create Account</h2>
+      <div class="auth-field"><label>Display name (optional)</label><input type="text" id="authName" placeholder="Your name"></div>
+      <div class="auth-field"><label>Email</label><input type="email" id="authEmail" placeholder="you@example.com"></div>
+      <div class="auth-field"><label>Password (min 6)</label>${pw('authPass')}</div>
+      <div class="auth-field"><label>Confirm password</label>${pw('authPass2')}</div>${err}
+      <button data-action="do-request-otp">Send verification code</button>
+      <div class="auth-links"><span class="acct-name">Have an account?</span>
+        <button class="link-btn" data-action="auth-mode" data-mode="signin">Sign in</button></div>
+      <button class="ghost" data-action="close-auth">Cancel</button>`;
+  } else if(mode==='otp'){
+    h=`<h2>Verify your email</h2>
+      <p class="muted">Enter the 6-digit code we sent to <b>${data.email||''}</b></p>
+      <div class="auth-field"><label>Verification code</label><input type="text" id="authOtp" inputmode="numeric" maxlength="6" placeholder="123456"></div>${err}
+      <div class="muted" id="authMsg"></div>
+      <button data-action="do-verify-otp">Verify &amp; Create Account</button>
+      <div class="auth-links">
+        <button class="link-btn" data-action="resend-otp">Resend code</button>
+        <button class="link-btn" data-action="auth-mode" data-mode="signup">← Change details</button></div>`;
+  } else if(mode==='forgot'){
+    h=`<h2>Reset Password</h2><p class="muted">Enter your email and we'll send a reset link.</p>
+      <div class="auth-field"><label>Email</label><input type="email" id="authEmail" placeholder="you@example.com"></div>${err}
+      <div class="muted" id="authMsg"></div>
+      <button data-action="do-forgot">Send reset link</button>
+      <button class="link-btn" data-action="auth-mode" data-mode="signin">← Back to sign in</button>`;
+  } else if(mode==='reset'){
+    h=`<h2>Set New Password</h2>
+      <div class="auth-field"><label>Reset token</label><input type="text" id="authToken2" value="${data.token||''}" placeholder="paste token"></div>
+      <div class="auth-field"><label>New password (min 6)</label>${pw('authNewPass')}</div>${err}
+      ${data.dev?'<div class="muted">Dev mode: token pre-filled (email not configured).</div>':''}
+      <button data-action="do-reset">Update password</button>
+      <button class="link-btn" data-action="auth-mode" data-mode="signin">← Back to sign in</button>`;
+  }
+  $('auth-card').innerHTML=h;
+}
+function setAuthErr(m){ const e=$('authErr'); if(e)e.textContent=m; }
+function setAuthMsg(m){ const e=$('authMsg'); if(e)e.textContent=m; }
+async function doSignin(){ setAuthErr('');
+  try{ const {token,user}=await api('/api/auth/login',{method:'POST',body:{email:$('authEmail').value,password:$('authPass').value}});
+    authToken=token; localStorage.setItem('chess-auth-token',token); currentUser=user;
+    showOverlay('auth-overlay',false); updateAccountUI(); updateBalances(); if(!$('shop-screen').hidden)renderShop(); toast('Signed in!');
+  }catch(e){ setAuthErr(e.message); } }
+let pendingSignup=null;   // holds {email,password,displayName} between OTP request & verify
+async function doRequestOtp(){ setAuthErr('');
+  const displayName=$('authName').value, email=$('authEmail').value, pw=$('authPass').value, cpw=$('authPass2').value;
+  if(pw.length<6){ setAuthErr('Password must be at least 6 characters'); return; }
+  if(pw!==cpw){ setAuthErr('Passwords do not match'); return; }
+  try{ const r=await api('/api/auth/request-otp',{method:'POST',body:{email}});
+    pendingSignup={email,password:pw,displayName};
+    openAuth('otp',{email});
+    if(r.devOtp) toast('Dev code (email not set up): '+r.devOtp);
+  }catch(e){ setAuthErr(e.message); } }
+async function doVerifyOtp(){ setAuthErr('');
+  if(!pendingSignup){ openAuth('signup'); return; }
+  try{ const {token,user}=await api('/api/auth/verify-otp',{method:'POST',body:{...pendingSignup, code:$('authOtp').value}});
+    authToken=token; localStorage.setItem('chess-auth-token',token); currentUser=user; pendingSignup=null;
+    showOverlay('auth-overlay',false); updateAccountUI(); updateBalances(); toast('Email verified — account created!');
+  }catch(e){ setAuthErr(e.message); } }
+async function resendOtp(){ if(!pendingSignup)return; setAuthErr(''); setAuthMsg('');
+  try{ const r=await api('/api/auth/request-otp',{method:'POST',body:{email:pendingSignup.email}});
+    setAuthMsg('A new code has been sent.'); if(r.devOtp) toast('Dev code: '+r.devOtp);
+  }catch(e){ setAuthErr(e.message); } }
+async function doForgot(){ setAuthErr(''); setAuthMsg('');
+  try{ const r=await api('/api/auth/forgot-password',{method:'POST',body:{email:$('authEmail').value}});
+    if(r.devResetLink) openAuth('reset',{token:r.devResetToken,dev:true});
+    else setAuthMsg('If that email is registered, a reset link has been sent.');
+  }catch(e){ setAuthErr(e.message); } }
+async function doReset(){ setAuthErr('');
+  try{ await api('/api/auth/reset-password',{method:'POST',body:{token:$('authToken2').value,password:$('authNewPass').value}});
+    toast('Password updated — please sign in'); openAuth('signin');
+  }catch(e){ setAuthErr(e.message); } }
+function signOut(){ authToken=null; currentUser=null; localStorage.removeItem('chess-auth-token');
+  updateAccountUI(); updateBalances(); if(!$('shop-screen').hidden)renderShop(); toast('Signed out'); }
+async function getTokens(){
+  if(!signedIn()){ toast('Sign in to get tokens'); openAuth('signin'); return; }
+  try{ const r=await api('/api/wallet/credit',{method:'POST',body:{amount:200}}); currentUser.tokenBalance=r.tokenBalance;
+    updateBalances(); renderShop(); toast('+200 tokens (demo — Billplz purchase connects later)');
+  }catch(e){ toast(e.message); } }
 
 document.addEventListener('click',(e)=>{
   const btn=e.target.closest('[data-action]'); if(!btn)return; const a=btn.dataset.action;
@@ -623,6 +943,24 @@ document.addEventListener('click',(e)=>{
   else if(a==='undo'){ undo(); }
   else if(a==='create-room'){ createRoom(); }
   else if(a==='join-room'){ joinRoom(); }
+  else if(a==='shop'){ renderShop(); showScreen('shop-screen'); }
+  else if(a==='get-tokens'){ getTokens(); }
+  else if(a==='buy'){ buyItem(btn.dataset.cat, btn.dataset.id); }
+  else if(a==='equip'){ equipItem(btn.dataset.cat, btn.dataset.id); }
+  else if(a==='sell'){ sellItem(btn.dataset.cat, btn.dataset.id); }
+  else if(a==='preview-sound'){ playSoundSet(btn.dataset.id); }
+  else if(a==='preview-victory'){ playVictory(btn.dataset.id); }
+  else if(a==='account'){ openAuth('signin'); }
+  else if(a==='sign-out'){ signOut(); }
+  else if(a==='close-auth'){ showOverlay('auth-overlay',false); }
+  else if(a==='auth-mode'){ openAuth(btn.dataset.mode); }
+  else if(a==='do-signin'){ doSignin(); }
+  else if(a==='do-request-otp'){ doRequestOtp(); }
+  else if(a==='do-verify-otp'){ doVerifyOtp(); }
+  else if(a==='resend-otp'){ resendOtp(); }
+  else if(a==='do-forgot'){ doForgot(); }
+  else if(a==='do-reset'){ doReset(); }
+  else if(a==='toggle-pw'){ const el=$(btn.dataset.target); if(el){ el.type=el.type==='password'?'text':'password'; btn.textContent=el.type==='password'?'👁':'🙈'; } }
 });
 
 $('diff').addEventListener('input',e=>$('diffVal').textContent=e.target.value);
@@ -641,12 +979,9 @@ function startAiGame(){
   startGame();
 }
 
-function syncOptions(){ document.body.dataset.theme=settings.theme;
-  for(const b of $('themeSeg').children)b.classList.toggle('active',b.dataset.theme===settings.theme);
+function syncOptions(){
   $('sw-hints').classList.toggle('on',settings.hints); $('sw-sound').classList.toggle('on',settings.sound);
   $('sw-autoflip').classList.toggle('on',settings.autoflip); $('serverUrl').value=settings.serverUrl; }
-$('themeSeg').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b)return;
-  settings.theme=b.dataset.theme; saveSettings(); syncOptions(); });
 function bindSwitch(el,key){ $(el).addEventListener('click',()=>{ settings[key]=!settings[key]; saveSettings(); syncOptions(); if(board)render(); }); }
 bindSwitch('sw-hints','hints'); bindSwitch('sw-sound','sound'); bindSwitch('sw-autoflip','autoflip');
 $('serverUrl').addEventListener('change',e=>{ settings.serverUrl=e.target.value.trim(); saveSettings(); });
@@ -717,7 +1052,7 @@ function onSocketMessage(ev){ let m; try{ m=JSON.parse(ev.data); }catch{ return;
 }
 
 // ── Boot ──
-document.body.dataset.theme=settings.theme;
+applyCosmetics(); updateAccountUI(); updateBalances(); refreshAccount();
 showScreen('menu-screen');
 </script>
 </body>

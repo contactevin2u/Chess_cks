@@ -20,10 +20,33 @@ CREATE TABLE IF NOT EXISTS users (
     user_id       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email         TEXT UNIQUE NOT NULL,
     display_name  TEXT,
+    -- bcrypt hash of the password (NULL for accounts created without a password)
+    password_hash TEXT,
     -- The wallet. Tokens are NON-withdrawable, in-ecosystem only.
     token_balance INTEGER NOT NULL DEFAULT 0 CHECK (token_balance >= 0),
     created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+-- For existing databases created before auth was added:
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
+
+-- ── PASSWORD RESETS (forgot-password flow) ──────────────────────
+CREATE TABLE IF NOT EXISTS password_resets (
+    token       TEXT PRIMARY KEY,
+    user_id     UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    expires_at  TIMESTAMPTZ NOT NULL,
+    used        BOOLEAN NOT NULL DEFAULT false,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_password_resets_user ON password_resets(user_id);
+
+-- ── EMAIL OTP (verify address before an account is created) ─────
+CREATE TABLE IF NOT EXISTS email_otps (
+    email       TEXT PRIMARY KEY,
+    code        TEXT NOT NULL,
+    expires_at  TIMESTAMPTZ NOT NULL,
+    attempts    INTEGER NOT NULL DEFAULT 0,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- ── TRANSACTIONS (audit ledger for every purchase) ──────────────
