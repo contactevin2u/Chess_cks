@@ -15,7 +15,7 @@ import 'dotenv/config';
 const env = (key) => {
   const val = process.env[key];
   if (!val) throw new Error(`Missing required env var: ${key}`);
-  return val;
+  return val.trim(); // guard against spaces/newlines pasted into env vars
 };
 
 // Billplz uses HTTP Basic Auth: username = API secret key, password = empty.

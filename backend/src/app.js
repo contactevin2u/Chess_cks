@@ -37,6 +37,25 @@ app.get('/health/config', (_req, res) => {
   });
 });
 
+// Billplz key diagnostics — tests the secret key against both environments
+// so we can see if it's a sandbox key, a production key, or invalid.
+app.get('/health/billplz', async (_req, res) => {
+  const key = process.env.BILLPLZ_SECRET_KEY;
+  if (!key) return res.json({ error: 'BILLPLZ_SECRET_KEY not set' });
+  const auth = 'Basic ' + Buffer.from(key.trim() + ':').toString('base64');
+  const test = async (base) => {
+    try { const r = await fetch(base + '/collections', { headers: { Authorization: auth } }); return r.status; }
+    catch (e) { return 'error: ' + e.message; }
+  };
+  res.json({
+    configuredApiUrl: process.env.BILLPLZ_API_URL || null,
+    keyLength: key.length,
+    keyLengthAfterTrim: key.trim().length,          // if these differ, there were stray spaces
+    sandboxStatus: await test('https://www.billplz-sandbox.com/api/v3'),   // 200 = valid sandbox key
+    productionStatus: await test('https://www.billplz.com/api/v3'),        // 200 = valid production key
+  });
+});
+
 // Database diagnostics — reports connection + table status (no data exposed).
 app.get('/health/db', async (_req, res) => {
   const hasDatabaseUrl = !!process.env.DATABASE_URL;
